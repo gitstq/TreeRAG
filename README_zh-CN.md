@@ -8,7 +8,7 @@
 <h1 align="center">🌳 TreeRAG</h1>
 
 <p align="center">
-  <strong>基于树索引的智能文档检索引擎 — 无需向量化，纯LLM推理驱动的下一代RAG方案</strong>
+  <strong>基于树索引的智能文档检索引擎 — 无需向量化，纯 LLM 推理驱动的下一代 RAG 方案</strong>
 </p>
 
 <p align="center">
@@ -16,38 +16,44 @@
   <a href="#-核心特性">核心特性</a> •
   <a href="#-快速开始">快速开始</a> •
   <a href="#-详细使用指南">使用指南</a> •
-  <a href="#-设计思路">设计思路</a>
+  <a href="#-设计思路与迭代规划">设计思路</a>
 </p>
 
 <p align="center">
-  <a href="./README_zh-CN.md">简体中文</a> |
+  <strong>简体中文</strong> |
   <a href="./README_zh-TW.md">繁體中文</a> |
-  <strong>English</strong>
+  <a href="./README.md">English</a>
 </p>
 
 ---
 
 ## 🎉 项目介绍
 
-**TreeRAG** 是一款创新的文档检索引擎，它彻底颠覆了传统RAG（Retrieval-Augmented Generation）方案中依赖向量数据库和文本分块的范式。
+**TreeRAG** 是一款颠覆传统 RAG（Retrieval-Augmented Generation）范式的新一代文档检索引擎。它彻底抛弃了向量数据库和文本分块的固有路线，转而采用纯 LLM 推理驱动的树索引方案，为文档检索带来了全新的解题思路。
 
 ### 🔥 解决的核心痛点
 
-传统RAG方案的三大困境：
-- **分块丢失语义**：将文档机械切割为固定长度的chunk，破坏了段落间的逻辑关联
-- **向量化精度瓶颈**：嵌入模型对专业术语、长尾概念的语义捕捉能力有限
-- **检索黑盒**：无法解释"为什么检索到这段内容"，缺乏可追溯性
+传统 RAG 方案长期面临三大困境：
 
-### 💡 TreeRAG的解决方案
+- **分块丢失语义**：将文档机械切割为固定长度的 chunk，破坏了段落之间的逻辑关联，上下文信息支离破碎
+- **向量化精度瓶颈**：嵌入模型对专业术语、长尾概念的语义捕捉能力有限，检索精度难以突破天花板
+- **检索黑盒**：无法解释"为什么检索到这段内容"，缺乏可追溯性，用户对结果难以建立信任
 
-TreeRAG 模拟人类专家阅读文档的方式：
-1. **层次化理解**：将文档组织为树状结构，从段落→章节→全文逐层构建摘要
-2. **推理式检索**：搜索时从根节点出发，通过LLM推理判断每条路径的相关性，精准定位目标内容
-3. **可解释性**：完整的检索路径可追溯，每一步推理过程透明可见
+### 💡 自研差异化亮点
+
+TreeRAG 模拟人类专家阅读文档的方式，形成了鲜明的差异化优势：
+
+1. **层次化理解**：将文档组织为树状结构，从段落 → 章节 → 全文逐层构建摘要，完整保留逻辑层次
+2. **推理式检索**：搜索时从根节点出发，通过 LLM 推理判断每条路径的相关性，精准定位目标内容
+3. **可解释性**：完整的检索路径可追溯，每一步推理过程透明可见，检索结果可信可控
+4. **增量更新**：新增文档无需全量重建索引，支持增量合并，大幅降低维护成本
+5. **多 LLM 后端**：OpenAI、Claude、Ollama 本地模型自由切换，灵活适配不同场景和预算
+6. **查询缓存**：内置 TTL 过期 + LRU 淘汰策略，重复查询秒级响应
+7. **Web UI**：内置深色主题可视化界面，开箱即用
 
 ### 🌟 灵感来源
 
-灵感来源于 AlphaGo 的树搜索算法——与其将所有信息压缩到一个平面空间（向量化），不如构建层次化的知识树，让AI像下棋一样"思考"每一步该走向哪个分支。
+灵感来源于 **AlphaGo 的树搜索算法**——与其将所有信息压缩到一个平面空间（向量化），不如构建层次化的知识树，让 AI 像下棋一样"思考"每一步该走向哪个分支。
 
 ---
 
@@ -55,16 +61,16 @@ TreeRAG 模拟人类专家阅读文档的方式：
 
 | 特性 | 描述 |
 |------|------|
-| 🌳 **树索引引擎** | 递归构建层次化文档索引，LLM自动生成节点摘要 |
-| 🔍 **推理式搜索** | 深度优先树遍历 + LLM相关性评分，精准定位答案 |
+| 🌳 **树索引引擎** | 递归构建层次化文档索引，LLM 自动生成节点摘要 |
+| 🔍 **推理式搜索** | 深度优先树遍历 + LLM 相关性评分，精准定位答案 |
 | 📄 **多格式支持** | PDF、Markdown、TXT、DOCX 全格式解析 |
-| 🤖 **多LLM后端** | OpenAI、Claude、Ollama本地模型自由切换 |
-| ⚡ **查询缓存** | TTL过期 + LRU淘汰策略，重复查询秒级响应 |
+| 🤖 **多 LLM 后端** | OpenAI、Claude、Ollama 本地模型自由切换 |
+| ⚡ **查询缓存** | TTL 过期 + LRU 淘汰策略，重复查询秒级响应 |
 | 🔄 **增量更新** | 新增文档无需全量重建索引，支持增量合并 |
 | 🌐 **Web UI** | 内置深色主题可视化界面，开箱即用 |
-| 💻 **CLI工具** | Rich美化终端输出，支持索引/搜索/服务全流程 |
-| 🔌 **REST API** | FastAPI驱动，轻松集成到现有系统 |
-| 🧪 **完善测试** | 55个单元测试覆盖核心模块，质量有保障 |
+| 💻 **CLI 工具** | Rich 美化终端输出，支持索引/搜索/服务全流程 |
+| 🔌 **REST API** | FastAPI 驱动，轻松集成到现有系统 |
+| 🧪 **完善测试** | 55 个单元测试覆盖核心模块，质量有保障 |
 
 ---
 
@@ -75,7 +81,7 @@ TreeRAG 模拟人类专家阅读文档的方式：
 - **Python** >= 3.10
 - **LLM API**：以下任一即可
   - OpenAI API Key（推荐 GPT-4 / GPT-3.5-turbo）
-  - Anthropic API Key（Claude系列）
+  - Anthropic API Key（Claude 系列）
   - Ollama 本地模型（推荐 llama3、mistral）
 
 ### 安装
@@ -88,15 +94,15 @@ cd TreeRAG
 # 安装依赖
 pip install -r requirements.txt
 
-# 可选：安装特定LLM后端
-pip install openai    # OpenAI支持
-pip install anthropic # Claude支持
+# 可选：安装特定 LLM 后端
+pip install openai    # OpenAI 支持
+pip install anthropic # Claude 支持
 ```
 
-### 本地启动
+### 本地启动（Ollama 零成本方案）
 
 ```bash
-# 1. 配置LLM（使用Ollama本地模型，零成本）
+# 1. 配置 LLM（使用 Ollama 本地模型，零成本）
 export TREERAG_LLM_BACKEND=ollama
 export TREERAG_LLM_MODEL=llama3
 export TREERAG_LLM_BASE_URL=http://localhost:11434
@@ -107,11 +113,11 @@ treerag index ./docs/
 # 3. 搜索查询
 treerag search "什么是机器学习？"
 
-# 4. 启动Web服务
+# 4. 启动 Web 服务
 treerag serve --host 0.0.0.0 --port 8000
 ```
 
-### 使用OpenAI
+### 使用 OpenAI
 
 ```bash
 export TREERAG_LLM_BACKEND=openai
@@ -122,7 +128,7 @@ treerag index ./docs/
 treerag search "你的问题"
 ```
 
-### Docker部署
+### Docker 部署
 
 ```bash
 docker build -t treerag .
@@ -133,7 +139,7 @@ docker run -p 8000:8000 -e TREERAG_LLM_BACKEND=ollama treerag
 
 ## 📖 详细使用指南
 
-### CLI完整命令
+### CLI 完整命令
 
 ```bash
 # 索引单个文件
@@ -156,11 +162,11 @@ treerag config set llm.backend openai
 treerag config set llm.model gpt-4
 treerag config show
 
-# 启动Web服务
+# 启动 Web 服务
 treerag serve --port 8080 --reload
 ```
 
-### REST API使用
+### REST API 使用示例
 
 ```python
 import requests
@@ -180,7 +186,7 @@ results = response.json()
 stats = requests.get("http://localhost:8000/api/stats").json()
 ```
 
-### Python SDK集成
+### Python SDK 集成
 
 ```python
 from treerag.indexer import TreeIndexer
@@ -207,11 +213,11 @@ results = searcher.search("你的问题", top_k=5)
 
 for result in results:
     print(f"[Score: {result.score:.2f}] {result.content}")
-    print(f"  Source: {result.source}")
-    print(f"  Path: {' → '.join(result.node_path)}")
+    print(f"  来源: {result.source}")
+    print(f"  路径: {' → '.join(result.node_path)}")
 ```
 
-### 配置文件
+### 配置文件说明
 
 在项目根目录创建 `treerag_config.json`：
 
@@ -236,42 +242,49 @@ for result in results:
 }
 ```
 
+配置加载优先级（后者覆盖前者）：
+1. 默认配置值
+2. 配置文件（`treerag_config.json`）
+3. 环境变量（`TREERAG_` 前缀，如 `TREERAG_LLM_BACKEND`）
+4. CLI 命令行参数
+
 ---
 
 ## 💡 设计思路与迭代规划
 
 ### 设计理念
 
-> "让AI像人类专家一样阅读文档——先看目录，再翻章节，最后精读段落。"
+> "让 AI 像人类专家一样阅读文档——先看目录，再翻章节，最后精读段落。"
 
-TreeRAG的核心设计哲学是**层次化推理**：
+TreeRAG 的核心设计哲学是**层次化推理**：
+
 - **索引阶段**：自底向上构建摘要树，每一层都是下一层的"目录"
-- **搜索阶段**：自顶向下推理导航，LLM判断"这个分支值得深入吗？"
+- **搜索阶段**：自顶向下推理导航，LLM 判断"这个分支值得深入吗？"
 - **答案提取**：在叶节点层面精读原文，提取精准答案
 
 ### 技术选型
 
 | 组件 | 选型 | 原因 |
 |------|------|------|
-| 核心语言 | Python 3.10+ | AI生态最完善，LLM SDK首选 |
-| Web框架 | FastAPI | 异步高性能，自动API文档 |
-| CLI框架 | Click + Rich | 类型安全 + 终端美化 |
+| 核心语言 | Python 3.10+ | AI 生态最完善，LLM SDK 首选 |
+| Web 框架 | FastAPI | 异步高性能，自动 API 文档 |
+| CLI 框架 | Click + Rich | 类型安全 + 终端美化 |
 | 文档解析 | PyPDF2 + python-docx | 轻量级，无重依赖 |
 
 ### 后续迭代计划
 
 - [ ] 🗂️ **知识图谱集成**：将树索引与知识图谱结合，支持跨文档关联推理
 - [ ] 📊 **可视化索引浏览器**：交互式树结构可视化，支持手动调整
-- [ ] 🔗 **MCP协议支持**：接入Claude Desktop、Cursor等AI工具
-- [ ] 🌍 **多语言优化**：针对中文、日文等CJK语言的分段和检索优化
-- [ ] 📱 **移动端适配**：响应式Web UI + PWA支持
+- [ ] 🔗 **MCP 协议支持**：接入 Claude Desktop、Cursor 等 AI 工具
+- [ ] 🌍 **多语言优化**：针对中文、日文等 CJK 语言的分段和检索优化
+- [ ] 📱 **移动端适配**：响应式 Web UI + PWA 支持
 - [ ] 🔐 **权限控制**：文档级别的访问控制和加密索引
 
 ---
 
-## 📦 打包与部署
+## 📦 打包与部署指南
 
-### pip安装（推荐）
+### pip 安装（推荐）
 
 ```bash
 pip install .
@@ -286,20 +299,20 @@ pip install -r requirements.txt
 python -m treerag.cli serve
 ```
 
-### Docker部署
+### Docker 部署
 
 ```bash
 # 构建镜像
 docker build -t treerag .
 
-# 运行（使用Ollama本地模型）
+# 运行（使用 Ollama 本地模型）
 docker run -d -p 8000:8000 \
   -v ./docs:/app/docs \
   -v ./treerag_data:/app/treerag_data \
   --network host \
   treerag
 
-# 运行（使用OpenAI）
+# 运行（使用 OpenAI）
 docker run -d -p 8000:8000 \
   -e TREERAG_LLM_BACKEND=openai \
   -e TREERAG_LLM_API_KEY=sk-xxx \
@@ -311,7 +324,7 @@ docker run -d -p 8000:8000 \
 | 环境 | 最低版本 | 推荐版本 |
 |------|---------|---------|
 | Python | 3.10 | 3.11+ |
-| Node.js（Web UI开发） | 18 | 20 LTS |
+| Node.js（Web UI 开发） | 18 | 20 LTS |
 | Docker | 20.10 | 24+ |
 | Ollama | 0.1 | 最新 |
 
@@ -319,34 +332,33 @@ docker run -d -p 8000:8000 \
 
 ## 🤝 贡献指南
 
-我们欢迎所有形式的贡献！无论是Bug报告、功能建议还是代码提交。
+我们欢迎所有形式的贡献！无论是 Bug 报告、功能建议还是代码提交。
 
-### 提交PR流程
+### PR 提交规范
 
-1. Fork本仓库
+遵循 **Angular Commit Convention**：
+
+1. Fork 本仓库
 2. 创建特性分支：`git checkout -b feature/amazing-feature`
-3. 提交更改：`git commit -m 'feat: 添加某个特性'`
+3. 提交更改（请使用规范的提交信息）：
+   - `feat:` 新增功能
+   - `fix:` 修复问题
+   - `docs:` 文档更新
+   - `refactor:` 代码重构
+   - `test:` 测试相关
+   - `chore:` 构建/工具链相关
 4. 推送分支：`git push origin feature/amazing-feature`
-5. 提交Pull Request
+5. 提交 Pull Request
 
-### 提交规范
+### Issue 反馈规则
 
-遵循 Angular Commit Convention：
-- `feat:` 新增功能
-- `fix:` 修复问题
-- `docs:` 文档更新
-- `refactor:` 代码重构
-- `test:` 测试相关
-- `chore:` 构建/工具链相关
+请使用 [GitHub Issues](https://github.com/gitstq/TreeRAG/issues) 提交 Bug 报告或功能建议，提交时请附上：
 
-### Issue反馈
-
-请使用 [GitHub Issues](https://github.com/gitstq/TreeRAG/issues) 提交Bug报告或功能建议，提交时请附上：
-- 问题描述
-- 复现步骤
-- 期望行为
-- 实际行为
-- 环境信息（Python版本、操作系统、LLM后端）
+- **问题描述**：清晰描述遇到的问题或建议的功能
+- **复现步骤**：详细的操作步骤，确保他人可以复现
+- **期望行为**：你认为应该出现的结果
+- **实际行为**：实际出现的结果（附截图或日志更佳）
+- **环境信息**：Python 版本、操作系统、LLM 后端及模型
 
 ---
 
