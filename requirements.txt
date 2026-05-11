@@ -1,0 +1,15 @@
+# TreeRAG 核心依赖
+click>=8.0
+rich>=13.0
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0
+PyPDF2>=3.0
+python-docx>=0.8.11
+httpx>=0.24.0
+markdown>=3.4
+python-multipart>=0.0.6
+
+# 可选依赖（取消注释以启用）
+# anthropic>=0.18.0
+# openai>=1.0

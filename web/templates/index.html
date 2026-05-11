@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TreeRAG - 智能文档检索</title>
+    <style>
+        /* ===== CSS变量与全局样式 ===== */
+        :root {
+            --bg-primary: #0f1117;
+            --bg-secondary: #1a1d27;
+            --bg-tertiary: #252836;
+            --bg-card: #1e2130;
+            --text-primary: #e4e6f0;
+            --text-secondary: #9498ad;
+            --text-muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-hover: #8da4ff;
+            --accent-dim: rgba(108, 140, 255, 0.15);
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --border: #2d3148;
+            --border-light: #3a3f5c;
+            --radius: 10px;
+            --radius-lg: 16px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                         'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ===== 布局 ===== */
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 32px;
+        }
+
+        .app-logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            min-width: 80px;
+        }
+
+        .stat-badge .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-badge .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== 主内容区域 ===== */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== 搜索区域 ===== */
+        .search-section {
+            margin-bottom: 24px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 16px 56px 16px 20px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-dim);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-box button {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 10px 20px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .search-box button:hover {
+            background: var(--accent-hover);
+        }
+
+        .search-box button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== 搜索结果 ===== */
+        .results-section {
+            min-height: 300px;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .results-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+
+        .result-card:hover {
+            border-color: var(--border-light);
+            box-shadow: var(--shadow);
+        }
+
+        .result-card.answer-card {
+            border-left: 4px solid var(--accent);
+        }
+
+        .result-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .result-score {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .score-high {
+            background: rgba(74, 222, 128, 0.15);
+            color: var(--success);
+        }
+
+        .score-medium {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--warning);
+        }
+
+        .score-low {
+            background: rgba(248, 113, 113, 0.15);
+            color: var(--danger);
+        }
+
+        .result-source {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .result-answer-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .result-content {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        /* ===== 侧边栏 ===== */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+        }
+
+        .sidebar-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        /* ===== 文件上传 ===== */
+        .upload-area {
+            border: 2px dashed var(--border-light);
+            border-radius: var(--radius);
+            padding: 28px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .upload-area .upload-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.6;
+        }
+
+        .upload-area p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .upload-area .upload-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        /* ===== 索引统计 ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stats-item {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stats-item .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stats-item .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ===== 文档列表 ===== */
+        .doc-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .doc-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .doc-list li:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .doc-list .doc-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+        }
+
+        .doc-list .doc-count {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.4;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ===== 加载动画 ===== */
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            gap: 8px;
+        }
+
+        .loading-spinner .dot {
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-spinner .dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-spinner .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* ===== Toast通知 ===== */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+            max-width: 360px;
+        }
+
+        .toast.success {
+            background: rgba(74, 222, 128, 0.15);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: var(--success);
+        }
+
+        .toast.error {
+            background: rgba(248, 113, 113, 0.15);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: var(--danger);
+        }
+
+        .toast.info {
+            background: var(--accent-dim);
+            border: 1px solid rgba(108, 140, 255, 0.3);
+            color: var(--accent);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ===== 进度条 ===== */
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .progress-bar.active {
+            display: block;
+        }
+
+        .progress-bar .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #a78bfa);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.5s ease;
+            animation: progressPulse 2s infinite;
+        }
+
+        @keyframes progressPulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="app-container">
+        <!-- 头部 -->
+        <header class="app-header">
+            <div class="app-logo">
+                <div class="logo-icon">T</div>
+                <div class="logo-text">
+                    <h1>TreeRAG</h1>
+                    <p>基于树索引的智能文档检索引擎</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-badge">
+                    <span class="stat-value" id="headerNodes">-</span>
+                    <span class="stat-label">节点</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-value" id="headerDocs">-</span>
+                    <span class="stat-label">文档</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-value" id="headerDepth">-</span>
+                    <span class="stat-label">深度</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容 -->
+        <div class="main-content">
+            <!-- 左侧：搜索与结果 -->
+            <div class="search-and-results">
+                <!-- 搜索框 -->
+                <div class="search-section">
+                    <div class="search-box">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="输入搜索查询..."
+                            autocomplete="off"
+                        />
+                        <button id="searchBtn" onclick="performSearch()">搜索</button>
+                    </div>
+                </div>
+
+                <!-- 搜索结果 -->
+                <div class="results-section" id="resultsSection">
+                    <div class="empty-state">
+                        <div class="empty-icon">&#128269;</div>
+                        <p>上传文档并构建索引后，即可开始搜索</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：侧边栏 -->
+            <aside class="sidebar">
+                <!-- 文件上传 -->
+                <div class="sidebar-card">
+                    <h3>上传文档</h3>
+                    <div class="upload-area" id="uploadArea"
+                         onclick="document.getElementById('fileInput').click()">
+                        <div class="upload-icon">&#128194;</div>
+                        <p>点击或拖拽文件到此处</p>
+                        <p class="upload-hint">支持 PDF / Markdown / TXT / DOCX</p>
+                        <input type="file" id="fileInput"
+                               accept=".pdf,.md,.markdown,.txt,.text,.docx"
+                               onchange="handleFileUpload(this.files)" />
+                    </div>
+                    <div class="progress-bar" id="indexProgress">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <!-- 索引统计 -->
+                <div class="sidebar-card">
+                    <h3>索引统计</h3>
+                    <div class="stats-grid">
+                        <div class="stats-item">
+                            <div class="value" id="statNodes">0</div>
+                            <div class="label">总节点数</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="value" id="statDocs">0</div>
+                            <div class="label">文档片段</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="value" id="statDepth">0</div>
+                            <div class="label">最大深度</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="value" id="statSize">0</div>
+                            <div class="label">索引大小</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已索引文档 -->
+                <div class="sidebar-card">
+                    <h3>已索引文档</h3>
+                    <ul class="doc-list" id="docList">
+                        <li style="color: var(--text-muted); justify-content: center;">
+                            暂无文档
+                        </li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        // ===== 全局状态 =====
+        let isSearching = false;
+        let isIndexing = false;
+
+        // ===== 初始化 =====
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadDocuments();
+
+            // 搜索框回车事件
+            document.getElementById('searchInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            // 拖拽上传
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFileUpload(e.dataTransfer.files);
+                }
+            });
+        });
+
+        // ===== Toast通知 =====
+        function showToast(message, type) {
+            type = type || 'info';
+            var container = document.getElementById('toastContainer');
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 3000);
+        }
+
+        // ===== 文件上传 =====
+        async function handleFileUpload(files) {
+            if (isIndexing) {
+                showToast('正在构建索引，请稍候...', 'info');
+                return;
+            }
+
+            if (!files || files.length === 0) return;
+
+            var file = files[0];
+            var allowedExts = ['.pdf', '.md', '.markdown', '.txt', '.text', '.docx'];
+            var ext = '.' + file.name.split('.').pop().toLowerCase();
+
+            if (allowedExts.indexOf(ext) === -1) {
+                showToast('不支持的文件格式: ' + ext, 'error');
+                return;
+            }
+
+            isIndexing = true;
+            var progress = document.getElementById('indexProgress');
+            var fill = document.getElementById('progressFill');
+            progress.classList.add('active');
+            fill.style.width = '10%';
+
+            showToast('正在上传和索引: ' + file.name, 'info');
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                fill.style.width = '30%';
+
+                var response = await fetch('/api/index', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                fill.style.width = '80%';
+
+                if (!response.ok) {
+                    var errorData = await response.json();
+                    throw new Error(errorData.detail || '索引构建失败');
+                }
+
+                var data = await response.json();
+                fill.style.width = '100%';
+
+                showToast(data.message + ' (' + data.total_nodes + ' 个节点)', 'success');
+
+                // 刷新统计和文档列表
+                setTimeout(function() {
+                    loadStats();
+                    loadDocuments();
+                    progress.classList.remove('active');
+                    fill.style.width = '0%';
+                    isIndexing = false;
+                }, 500);
+
+            } catch (error) {
+                showToast('索引失败: ' + error.message, 'error');
+                progress.classList.remove('active');
+                fill.style.width = '0%';
+                isIndexing = false;
+            }
+        }
+
+        // ===== 搜索 =====
+        async function performSearch() {
+            if (isSearching) return;
+
+            var query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                showToast('请输入搜索查询', 'info');
+                return;
+            }
+
+            isSearching = true;
+            var btn = document.getElementById('searchBtn');
+            btn.disabled = true;
+            btn.textContent = '搜索中...';
+
+            var section = document.getElementById('resultsSection');
+            section.innerHTML = '<div class="loading-spinner">' +
+                '<div class="dot"></div><div class="dot"></div><div class="dot"></div>' +
+                '</div>';
+
+            try {
+                var response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, top_k: 10 })
+                });
+
+                if (!response.ok) {
+                    var errorData = await response.json();
+                    throw new Error(errorData.detail || '搜索失败');
+                }
+
+                var data = await response.json();
+                renderResults(data);
+
+            } catch (error) {
+                section.innerHTML = '<div class="empty-state">' +
+                    '<div class="empty-icon">&#9888;&#65039;</div>' +
+                    '<p>' + error.message + '</p></div>';
+                showToast('搜索失败: ' + error.message, 'error');
+            } finally {
+                isSearching = false;
+                btn.disabled = false;
+                btn.textContent = '搜索';
+            }
+        }
+
+        // ===== 渲染搜索结果 =====
+        function renderResults(data) {
+            var section = document.getElementById('resultsSection');
+
+            if (!data.results || data.results.length === 0) {
+                section.innerHTML = '<div class="empty-state">' +
+                    '<div class="empty-icon">&#128533;</div>' +
+                    '<p>未找到相关结果</p></div>';
+                return;
+            }
+
+            var html = '<div class="results-header">' +
+                '<h2>找到 ' + data.total + ' 个结果</h2>' +
+                '</div>';
+
+            data.results.forEach(function(result, index) {
+                var isAnswer = result.metadata && result.metadata.type === 'extracted_answer';
+                var scoreClass = result.score > 0.7 ? 'score-high' :
+                                 result.score > 0.4 ? 'score-medium' : 'score-low';
+
+                html += '<div class="result-card' + (isAnswer ? ' answer-card' : '') + '">';
+
+                if (isAnswer) {
+                    html += '<div class="result-answer-label">&#10024; 综合答案</div>';
+                }
+
+                html += '<div class="result-meta">' +
+                    '<span class="result-score ' + scoreClass + '">' +
+                    (result.score * 100).toFixed(0) + '% 相关</span>';
+
+                if (result.source) {
+                    html += '<span class="result-source">' + escapeHtml(result.source) + '</span>';
+                }
+
+                if (result.metadata && result.metadata.page) {
+                    html += '<span class="result-source">第 ' + result.metadata.page + ' 页</span>';
+                }
+
+                html += '</div>';
+                html += '<div class="result-content">' + escapeHtml(result.content) + '</div>';
+                html += '</div>';
+            });
+
+            section.innerHTML = html;
+        }
+
+        // ===== 加载统计信息 =====
+        async function loadStats() {
+            try {
+                var response = await fetch('/api/stats');
+                if (!response.ok) return;
+                var data = await response.json();
+
+                document.getElementById('statNodes').textContent = data.total_nodes;
+                document.getElementById('statDocs').textContent = data.total_documents;
+                document.getElementById('statDepth').textContent = data.max_depth;
+
+                var sizeStr = data.index_size > 1024 * 1024
+                    ? (data.index_size / 1024 / 1024).toFixed(1) + 'M'
+                    : data.index_size > 1024
+                    ? (data.index_size / 1024).toFixed(1) + 'K'
+                    : data.index_size + 'B';
+                document.getElementById('statSize').textContent = sizeStr;
+
+                document.getElementById('headerNodes').textContent = data.total_nodes;
+                document.getElementById('headerDocs').textContent = data.total_documents;
+                document.getElementById('headerDepth').textContent = data.max_depth;
+
+            } catch (e) {
+                // 静默失败
+            }
+        }
+
+        // ===== 加载文档列表 =====
+        async function loadDocuments() {
+            try {
+                var response = await fetch('/api/documents');
+                if (!response.ok) return;
+                var data = await response.json();
+
+                var list = document.getElementById('docList');
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<li style="color: var(--text-muted); justify-content: center;">暂无文档</li>';
+                    return;
+                }
+
+                var html = '';
+                data.forEach(function(doc) {
+                    var name = doc.source.split('/').pop().split('\\').pop();
+                    html += '<li>' +
+                        '<span class="doc-name" title="' + escapeHtml(doc.source) + '">' + escapeHtml(name) + '</span>' +
+                        '<span class="doc-count">' + doc.segments + ' 段</span>' +
+                        '</li>';
+                });
+                list.innerHTML = html;
+
+            } catch (e) {
+                // 静默失败
+            }
+        }
+
+        // ===== 工具函数 =====
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
